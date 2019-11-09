@@ -92,11 +92,15 @@ else:
 # XXX NEED TO SET ROOTDIR
 # 
 for file in files:
-    command = "scp {}{} {}@{}:{}" \
+    if file.strip() == "":
+        continue
+
+    command = "scp {}{} {}@{}:~/{}" \
                    .format(
                        ssh_key .replace("-k=", ""),
                        file,
                        ssh_user.replace("-u=", ""),
-                       ssh_host.replace("-h=", "")
+                       ssh_host.replace("-h=", ""),
+                       file
                    )
     print(command)
