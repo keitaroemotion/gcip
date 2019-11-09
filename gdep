@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+
+import os
+import re
+import sys
+
+args  = sys.argv[1:]
+since = [x for x in args if x.startswith("--since=")]
+since = since[0] if len(since) > 0 else ''
+
+res   = os.popen("git --no-pager log {}".format(since)).read()
+
+commits = []
+commit  = []
+hash    = ""
+date    = ""
+
+def concat(commit):
+    return ''.join(commit).strip()
+
+def trim(hash):
+    return hash.replace('commit ', '')
+
+def trimd(date):
+    return date.replace('Date:   ', '') 
+
+for line in res.split("\n"):
+    if line.startswith('Date:'):
+        date = line 
+    elif line.startswith('commit'):
+        if(len(commit) > 0):
+            commits.append([
+                trim(hash),
+                trimd(date),
+                concat(commit)
+            ])
+        hash   = line
+        commit = []
+    elif line.startswith('  '):
+        commit.append(line)
+
+commits.append([trim(hash), date, concat(commit)])
+
+index = 0
+
+commits.reverse()
+
+for commit in commits:
+    print("[{}]({}) {}".format(index, commit[0], commit[1]))
+    index += 1
+   
+def ask():
+    answer = input('which hash?: ')
+    if not re.search('^\d+$', answer):
+        ask()
+    return answer
+
+answer = int(ask())
+print(commits[answer])
+
+hash = commits[answer][0]
+files = os.popen('git diff HEAD {} --name-only'.format(hash)).read()
+print(files)
