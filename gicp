@@ -7,12 +7,10 @@ import sys
 args     = sys.argv[1:]
 since    = [x for x in args if x.startswith("--since=")]
 since    = since[0] if len(since) > 0 else ''
-
 ssh_user = [x for x in args if x.startswith("-u=")]
 ssh_host = [x for x in args if x.startswith("-h=")]
 ssh_key  = [x for x in args if x.startswith("-k=")]
-
-res   = os.popen("git --no-pager log {}".format(since)).read()
+res      = os.popen("git --no-pager log {}".format(since)).read()
 
 commits = []
 commit  = []
@@ -73,8 +71,7 @@ def ask_i(message):
 answer = int(ask(commits))
 
 hash = commits[answer][0]
-files = os.popen('git diff HEAD {} --name-only'.format(hash)).read()
-print(files)
+files = os.popen('git diff HEAD {} --name-only'.format(hash)).read().split("\n")
 
 if(len(ssh_user) > 0):
     ssh_user = ssh_user[0]
@@ -87,15 +84,19 @@ else:
     ssh_host = ask_i("ssh host: ")
 
 if(len(ssh_key) > 0):
-    ssh_key = '-i ' + ssh_key[0]
+    ssh_key = '-i ' + ssh_key[0] + ' ' 
 else:
     ssh_key = ''
 
-print(
-    "scp {} {}@{}"
-        .format(
-            ssh_key .replace("-k=", ""),
-            ssh_user.replace("-u=", ""),
-            ssh_host.replace("-h=", "")
-        )
-)
+# 
+# XXX NEED TO SET ROOTDIR
+# 
+for file in files:
+    command = "scp {}{} {}@{}:{}" \
+                   .format(
+                       ssh_key .replace("-k=", ""),
+                       file,
+                       ssh_user.replace("-u=", ""),
+                       ssh_host.replace("-h=", "")
+                   )
+    print(command)
