@@ -4,9 +4,13 @@ import os
 import re
 import sys
 
-args  = sys.argv[1:]
-since = [x for x in args if x.startswith("--since=")]
-since = since[0] if len(since) > 0 else ''
+args     = sys.argv[1:]
+since    = [x for x in args if x.startswith("--since=")]
+since    = since[0] if len(since) > 0 else ''
+
+ssh_user = [x for x in args if x.startswith("-u=")]
+ssh_host = [x for x in args if x.startswith("-h=")]
+ssh_key  = [x for x in args if x.startswith("-k=")]
 
 res   = os.popen("git --no-pager log {}".format(since)).read()
 
@@ -14,6 +18,11 @@ commits = []
 commit  = []
 hash    = ""
 date    = ""
+
+def show_help_menu():
+    print('')
+    print('gicp -u=[sshuser] -h=[sshhost] -k=[sshkey] ... ssh connect')
+    print('')
 
 def concat(commit):
     return ''.join(commit).strip()
@@ -49,15 +58,44 @@ for commit in commits:
     print("[{}]({}) {}".format(index, commit[0], commit[1]))
     index += 1
    
-def ask():
+def ask(commits):
     answer = input('which hash?: ')
-    if not re.search('^\d+$', answer):
-        ask()
+    if (not re.search('^\d+$', answer)) or (len(commits) <= int(answer)):
+        return ask(commits)
     return answer
 
-answer = int(ask())
-print(commits[answer])
+def ask_i(message):
+    answer = input(message)
+    if message == "":
+        ask_i(message)
+    return answer
+
+answer = int(ask(commits))
 
 hash = commits[answer][0]
 files = os.popen('git diff HEAD {} --name-only'.format(hash)).read()
 print(files)
+
+if(len(ssh_user) > 0):
+    ssh_user = ssh_user[0]
+else:
+    ssh_user = ask_i("ssh user: ")
+
+if(len(ssh_host) > 0):
+    ssh_host = ssh_host[0]
+else:
+    ssh_host = ask_i("ssh host: ")
+
+if(len(ssh_key) > 0):
+    ssh_key = '-i ' + ssh_key[0]
+else:
+    ssh_key = ''
+
+print(
+    "scp {} {}@{}"
+        .format(
+            ssh_key .replace("-k=", ""),
+            ssh_user.replace("-u=", ""),
+            ssh_host.replace("-h=", "")
+        )
+)
