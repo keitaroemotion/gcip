@@ -73,6 +73,17 @@ answer = int(ask(commits))
 hash = commits[answer][0]
 files = os.popen('git diff HEAD {} --name-only'.format(hash)).read().split("\n")
 
+files = [f for f in files if f != ""]
+
+if len(files) == 0:
+    print("There's no file to send.")
+    sys.exit()
+
+print("\n=============Target Files================\n")
+for file in files:
+    print(file)
+print("")
+
 if(len(ssh_user) > 0):
     ssh_user = ssh_user[0]
 else:
@@ -92,9 +103,6 @@ else:
 # XXX NEED TO SET ROOTDIR
 # 
 for file in files:
-    if file.strip() == "":
-        continue
-
     command = "scp {}{} {}@{}:~/{}" \
                    .format(
                        ssh_key .replace("-k=", ""),
