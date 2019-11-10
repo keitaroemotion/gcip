@@ -69,11 +69,9 @@ def ask_i(message):
     return answer
 
 answer = int(ask(commits))
-
-hash = commits[answer][0]
-files = os.popen('git diff HEAD {} --name-only'.format(hash)).read().split("\n")
-
-files = [f for f in files if f != ""]
+hash   = commits[answer][0]
+files  = os.popen('git diff HEAD {} --name-only'.format(hash)).read().split("\n")
+files  = [f for f in files if f != ""]
 
 if len(files) == 0:
     print("There's no file to send.")
